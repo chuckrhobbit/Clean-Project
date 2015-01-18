@@ -1,0 +1,48 @@
+class project data science class
+objective: mutate and sumerize data from the UCI HAR dataset
+
+The dataset consists of activities types in activity_labels.txt
+                        sensor reading labels  in  features.txt
+                        sensor readings for 2 divitions of subjects ie.(train and test)
+                        activity type ref numbers in  y_test.txt and y_train.txt
+                        subject  ref numbers in X_test.txt and X_train.txt
+
+import steps:
+1. download raw text files to local dir "./data"
+
+2. tableize subject_train.txt to 'train_tb' , subject_test to test_tb.
+    these are unlabeled vectors of 561 variables.
+
+3. read in features.txt as a char vector. these are the column headers for "train_tb" and "test_tb"
+
+4. insert the headers 
+
+5. the activity and subject numbers corraponding to each row of these tables are in seperate text files which could be tablized and linked by row number later. I elected to add them directly to train_tb and test_tb in new columns 'subject' and 'activity'
+
+6. for this project we are using only the columns for the mean and standard diviation for these 17 feature categorys (from features_info.txt):
+time domain-----------------------------------------------------------------------------
+      tBodyAcc-XYZ      ==  tBodyAcc-mean()[-x-y-z] and tBodyAcc-std()[-X-y-z]
+      tGravityAcc-XYZ   ==  tGravityAcc-mean()[-x-y-z] and tGravityAcc-std()[-x-y-z] 
+      tBodyAccJerk-XYZ  ==  tBodyAccJerk-mean()[-x-y-z] and tBodyAcc-std()[-x-y-z]
+      tBodyGyro-XYZ     ==  tBodyGyro-mean()[-x-y-z] and tBodyGyro-std()[-x-y-z]
+      tBodyGyroJerk-XYZ ==  tBodyGyroJerk-mean()[-x-y-z] and tBodyGyroJerk-mean()[-x-y-z]
+      
+      tBodyAccMag       ==  tBodyAccMag-mean() and tBodyAccMag-std()
+      tGravityAccMag    ==  tGravityAccMag-mean() and tBodyAccJerkMag-std()
+      tBodyAccJerkMag   ==  tBodyAccJerkMag-mean()  and tBodyAccJerkMag-std()
+      tBodyGyroMag      ==  tBodyGyroMag-mean() and tBodyGyroMag-std()
+      tBodyGyroJerkMag  ==  tBodyGyroJerkMag-mean() and tBodyGyroJerkMag-std()
+frequency domain  -----------------------------------------------------------------------    
+      fBodyAcc-XYZ      == same as time domain with an f
+      fBodyAccJerk-XYZ  == same as time domain with an f 
+      fBodyGyro-XYZ     == same as time domain with an f
+      
+      fBodyAccMag       ==  same as time domain with an f
+      fBodyAccJerkMag   ==  same as time domain with an f
+      fBodyGyroMag      ==  same as time domain with an f
+      fBodyGyroJerkMag  == same as time domain with an f
+
+This should result in a table of 66 columns for feature cols + activity(1) + subject(1)
+each row is the selected features derived form the 128 samples per window 
+7. arrange rows by subject + activity
+8. build a new table with avg of each featue per group
