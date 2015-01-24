@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
-#--- start with reading in the test and train text file as tables
+#-- start with reading in the test and train text file as tables
 #    without factor coercing or whitespaces
 ## =============  CHECK FOR FILES (working dir)  ==============================
 run_analysis <-function(){
-library(dplyr)  
-  
+  library(data.table)
+
 file_list <- c("features.txt","activity_labels.txt",
                "train/X_train.txt","train/y_train.txt","train/subject_train.txt",             
                "test/X_test.txt","test/y_test.txt","test/subject_test.txt")
@@ -32,119 +32,132 @@ for( i in file_list){
   
  
 
-
+#OK load in files as tables
 testtb <- read.table("./test/X_test.txt",stringsAsFactors=FALSE)
 traintb <- read.table("./train/X_train.txt",stringsAsFactors=FALSE)
 heads <- read.table("./features.txt",stringsAsFactors=FALSE)
 
+#strip off - ( and ) to avoid col name errors
+headr <- gsub("[[:punct:]]",'',heads[ ,2])
 
+#use the headr vector to make col names
+names(testtb)<-headr
+names(traintb)<-headr
 
-setnames(testtb,heads[,2])
-setnames(traintb,heads[,2])
-
+#read in the test and train subject numbers
 test_sublist <- scan("./test/subject_test.txt",what=numeric())
 train_sublist <- scan("./train/subject_train.txt",what=numeric())
 
+#add the subjects to the corresponding tables
 testtb$subject<-test_sublist
 traintb$subject<-train_sublist
 
+# Do the same with the activity numers
 test_actlist <- scan("./test/y_test.txt",what=numeric())
 train_actlist <- scan("./train/y_train.txt",what=numeric())
 
 testtb$activity=test_actlist
 traintb$activity=train_actlist
 
+#combine the tables
 fulltb <- rbind(testtb,traintb)
-print(nrow(fulltb))
 
-usable_cols<- c("tBodyAcc-mean()-X",
-               "tBodyAcc-mean()-Y",
-               "tBodyAcc-mean()-Z",
-               "tBodyAcc-std()-X",
-               "tBodyAcc-std()-Y",
-               "tBodyAcc-std()-Z",
-               "tGravityAcc-mean()-X",
-               "tGravityAcc-mean()-Y",
-               "tGravityAcc-mean()-Z",
-               "tGravityAcc-std()-X",
-               "tGravityAcc-std()-Y",
-               "tGravityAcc-std()-Z",
-               "tBodyAccJerk-mean()-X",
-               "tBodyAccJerk-mean()-Y",
-               "tBodyAccJerk-mean()-Z",
-               "tBodyAccJerk-std()-X",
-               "tBodyAccJerk-std()-Y",
-               "tBodyAccJerk-std()-Z",
-               "tBodyGyro-mean()-X",
-               "tBodyGyro-mean()-Y",
-               "tBodyGyro-mean()-Z",
-               "tBodyGyro-std()-X",
-               "tBodyGyro-std()-Y",
-               "tBodyGyro-std()-Z",
-               "tBodyGyroJerk-mean()-X",
-               "tBodyGyroJerk-mean()-Y",
-               "tBodyGyroJerk-mean()-Z",
-               "tBodyGyroJerk-std()-X",
-               "tBodyGyroJerk-std()-Y",
-               "tBodyGyroJerk-std()-Z",
-               "tBodyAccMag-mean()",
-               "tBodyAccMag-std()",
-               "tGravityAccMag-mean()",
-               "tGravityAccMag-std()",
-               "tBodyAccJerkMag-mean()",
-               "tBodyAccJerkMag-std()",
-               "tBodyGyroMag-mean()",
-               "tBodyGyroMag-std()",
-               "tBodyGyroJerkMag-mean()",
-               "tBodyGyroJerkMag-std()",
-               "fBodyAcc-mean()-X",
-               "fBodyAcc-mean()-Y",
-               "fBodyAcc-mean()-Z",
-               "fBodyAcc-std()-X",
-               "fBodyAcc-std()-Y",
-               "fBodyAcc-std()-Z",
-               "fBodyAcc-meanFreq()-X",
-               "fBodyAcc-meanFreq()-Y",
-               "fBodyAcc-meanFreq()-Z",
-               "fBodyAccJerk-mean()-X",
-               "fBodyAccJerk-mean()-Y",
-               "fBodyAccJerk-mean()-Z",
-               "fBodyAccJerk-std()-X",
-               "fBodyAccJerk-std()-Y",
-               "fBodyAccJerk-std()-Z",
-               "fBodyAccJerk-meanFreq()-X",
-               "fBodyAccJerk-meanFreq()-Y",
-               "fBodyAccJerk-meanFreq()-Z",
-               "fBodyGyro-mean()-X",
-               "fBodyGyro-mean()-Y",
-               "fBodyGyro-mean()-Z",
-               "fBodyGyro-std()-X",
-               "fBodyGyro-std()-Y",
-               "fBodyGyro-std()-Z",
-               "fBodyGyro-meanFreq()-X",
-               "fBodyGyro-meanFreq()-Y",
-               "fBodyGyro-meanFreq()-Z",
-               "fBodyAccMag-mean()",
-               "fBodyAccMag-std()",
-               "fBodyAccMag-meanFreq()",
-               "fBodyBodyAccJerkMag-mean()",
-               "fBodyBodyAccJerkMag-std()",
-               "fBodyBodyAccJerkMag-meanFreq()",
-               "fBodyBodyGyroMag-mean()",
-               "fBodyBodyGyroMag-std()",
-               "fBodyBodyGyroMag-meanFreq()",
-               "fBodyBodyGyroJerkMag-mean()",
-               "fBodyBodyGyroJerkMag-std()",
-               "fBodyBodyGyroJerkMag-meanFreq()",
-               "angle(tBodyAccMean,gravity)",
-               "angle(tBodyAccJerkMean),gravityMean)",
-               "angle(tBodyGyroMean,gravityMean)",
-               "angle(tBodyGyroJerkMean,gravityMean)",
-               "angle(X,gravityMean)",
-               "angle(Y,gravityMean)",
-               "angle(Z,gravityMean)"
+#prepare a list of the columns we're interested in
+col_list<-  c( "tBodyAccmeanX",
+               "tBodyAccmeanY",
+               "tBodyAccmeanZ",
+               "tBodyAccstdX",
+               "tBodyAccstdY",
+               "tBodyAccstdZ",
+               "tGravityAccmeanX",
+               "tGravityAccmeanY",
+               "tGravityAccmeanZ",
+               "tGravityAccstdX",
+               "tGravityAccstdY",
+               "tGravityAccstdZ",
+               "tBodyAccJerkmeanX",
+               "tBodyAccJerkmeanY",
+               "tBodyAccJerkmeanZ",
+               "tBodyAccJerkstdX",
+               "tBodyAccJerkstdY",
+               "tBodyAccJerkstdZ",
+               "tBodyGyromeanX",
+               "tBodyGyromeanY",
+               "tBodyGyromeanZ",
+               "tBodyGyrostdX",
+               "tBodyGyrostdY",
+               "tBodyGyrostdZ",
+               "tBodyGyroJerkmeanX",
+               "tBodyGyroJerkmeanY",
+               "tBodyGyroJerkmeanZ",
+               "tBodyGyroJerkstdX",
+               "tBodyGyroJerkstdY",
+               "tBodyGyroJerkstdZ",
+               "tBodyAccMagmean",
+               "tBodyAccMagstd",
+               "tGravityAccMagmean",
+               "tGravityAccMagstd",
+               "tBodyAccJerkMagmean",
+               "tBodyAccJerkMagstd",
+               "tBodyGyroMagmean",
+               "tBodyGyroMagstd",
+               "tBodyGyroJerkMagmean",
+               "tBodyGyroJerkMagstd",
+               "fBodyAccmeanX",
+               "fBodyAccmeanY",
+               "fBodyAccmeanZ",
+               "fBodyAccstdX",
+               "fBodyAccstdY",
+               "fBodyAccstdZ",
+               "fBodyAccmeanFreqX",
+               "fBodyAccmeanFreqY",
+               "fBodyAccmeanFreqZ",
+               "fBodyAccJerkmeanX",
+               "fBodyAccJerkmeanY",
+               "fBodyAccJerkmeanZ",
+               "fBodyAccJerkstdX",
+               "fBodyAccJerkstdY",
+               "fBodyAccJerkstdZ",
+               "fBodyAccJerkmeanFreqX",
+               "fBodyAccJerkmeanFreqY",
+               "fBodyAccJerkmeanFreqZ",
+               "fBodyGyromeanX",
+               "fBodyGyromeanY",
+               "fBodyGyromeanZ",
+               "fBodyGyrostdX",
+               "fBodyGyrostdY",
+               "fBodyGyrostdZ",
+               "fBodyGyromeanFreqX",
+               "fBodyGyromeanFreqY",
+               "fBodyGyromeanFreqZ",
+               "fBodyAccMagmean",
+               "fBodyAccMagstd",
+               "fBodyAccMagmeanFreq",
+               "fBodyBodyAccJerkMagmean",
+               "fBodyBodyAccJerkMagstd",
+               "fBodyBodyAccJerkMagmeanFreq",
+               "fBodyBodyGyroMagmean",
+               "fBodyBodyGyroMagstd",
+               "fBodyBodyGyroMagmeanFreq",
+               "fBodyBodyGyroJerkMagmean",
+               "fBodyBodyGyroJerkMagstd",
+               "fBodyBodyGyroJerkMagmeanFreq",
+               "activity",
+               "subject"
 )
 
-shorttb <- select(fulltb,useable_cols)
-summarize(shorttb)
+#shorttb <- data.frame(1)
+#build a table of just those interesting columns
+shorttb <- data.table(fulltb[ ,col_list])
+
+print(summary(shorttb))
+
 }
+
+#angle(tBodyAccMean,gravity),
+#angle(tBodyAccJerkMean),gravityMean),
+#angle(tBodyGyroMean,gravityMean),
+#angle(tBodyGyroJerkMean,gravityMean),
+#angle(X,gravityMean),
+#angle(Y,gravityMean),
+#angle(Z,gravityMean),
