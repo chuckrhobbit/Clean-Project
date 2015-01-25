@@ -3,8 +3,9 @@
 #    without factor coercing or whitespaces
 ## =============  CHECK FOR FILES (working dir)  ==============================
 run_analysis <-function(){
-  library(data.table)
-
+##package requirements
+  library(reshape2,plyr)
+  
 file_list <- c("features.txt","activity_labels.txt",
                "train/X_train.txt","train/y_train.txt","train/subject_train.txt",             
                "test/X_test.txt","test/y_test.txt","test/subject_test.txt")
@@ -36,6 +37,9 @@ for( i in file_list){
 testtb <- read.table("./test/X_test.txt",stringsAsFactors=FALSE)
 traintb <- read.table("./train/X_train.txt",stringsAsFactors=FALSE)
 heads <- read.table("./features.txt",stringsAsFactors=FALSE)
+#get the activity labels
+actnames <- scan("./activity_labels.txt",what=list(numeric(),character()))
+
 
 #strip off - ( and ) to avoid col name errors
 headr <- gsub("[[:punct:]]",'',heads[ ,2])
@@ -63,7 +67,9 @@ traintb$activity=train_actlist
 fulltb <- rbind(testtb,traintb)
 
 #prepare a list of the columns we're interested in
-col_list<-  c( "tBodyAccmeanX",
+col_list<-  c( "subject",
+              "activity",
+              "tBodyAccmeanX",
                "tBodyAccmeanY",
                "tBodyAccmeanZ",
                "tBodyAccstdX",
@@ -141,19 +147,31 @@ col_list<-  c( "tBodyAccmeanX",
                "fBodyBodyGyroMagmeanFreq",
                "fBodyBodyGyroJerkMagmean",
                "fBodyBodyGyroJerkMagstd",
-               "fBodyBodyGyroJerkMagmeanFreq",
-               "activity",
-               "subject"
+               "fBodyBodyGyroJerkMagmeanFreq"
+               
 )
 
-#shorttb <- data.frame(1)
-#build a table of just those interesting columns
-shorttb <- data.table(fulltb[ ,col_list])
+shorttb <- data.frame(fulltb[ ,col_list])
 
-print(summary(shorttb))
+#list of numeric obs (we dont want the mean of text variables etc)
+nobs <- col_list[3:81]
+
+#melt the data so we have measurement types in a column
+shorttb <- melt(shorttb,id.vars=(c("subject","activity")),measure.vars=nobs,
+           variable.name="feature", measure.value="value")
+
+#replace the activity indexes with the activity text
+shorttb$activity_name <- actnames[[2]][shorttb$activity]
+
+#print(shorttb) #just for checking
+
+
+cdata <- ddply(shorttb, c("activity", "subject","feature"), summarize,
+                mean = mean(value,na.rm=TRUE)
+               )
 
 }
-
+#NOT using these
 #angle(tBodyAccMean,gravity),
 #angle(tBodyAccJerkMean),gravityMean),
 #angle(tBodyGyroMean,gravityMean),
